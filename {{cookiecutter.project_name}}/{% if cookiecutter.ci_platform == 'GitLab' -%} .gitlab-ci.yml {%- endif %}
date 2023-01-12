@@ -1,0 +1,93 @@
+image: python:latest
+
+# Change pip's cache directory to be inside the project directory since we can
+# only cache local items.
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+# Pip's cache doesn't store the python packages
+# https://pip.pypa.io/en/stable/reference/pip_install/#caching
+#
+# If you want to also cache the installed packages, you have to install
+# them in a virtualenv and cache it as well.
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+
+stages:
+  - lint
+  - test
+  - build
+  - deploy
+
+.python_base:
+  before_script:
+    - apk update && apk add alpine-sdk libxslt-dev libxml2-dev libffi-dev
+    - pip install poetry
+    - poetry config virtualenvs.create false
+    - poetry install
+
+Unit Tests:
+  stage: test
+  extends: [.python_base]
+  script:
+    - poetry run pytest
+  parallel:
+    matrix:
+      - PY_VERSION: ["3.8-alpine", "3.9-alpine", "3.10-alpine"]
+  image: python:${PY_VERSION}
+
+Codestyle Check:
+  image: python:latest
+  extends: [.python_base]
+  script:
+    - python -V  # Print out python version for debugging
+    - pycodestyle -v src/ --ignore=E501,E121
+
+Python Code Lint:
+  stage: lint
+  extends: [.python_base]
+  script:
+    - poetry run black .
+
+# Ignore type checking for now.
+# Static Type Check:
+#   stage: test
+#   script:
+#     - poetry run mypy .
+
+Build Image:
+  stage: deploy
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
+  variables:
+    GIT_STRATEGY: clone
+    GIT_DEPTH: 0
+    IMAGE_TAG: ${CI_REGISTRY_IMAGE}:$CI_COMMIT_REF_SLUG-$CI_COMMIT_SHORT_SHA
+    IMAGE_LATEST: ${CI_REGISTRY_IMAGE}:$CI_COMMIT_REF_SLUG-latest
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_TAG -t $IMAGE_LATEST -f docker/Dockerfile .
+    - docker push $IMAGE_TAG
+    - docker push $IMAGE_LATEST
+  rules:
+    - changes:
+        - src/**/*.py
+        - pyproject.toml
+        - poetry.lock
+        - docker/Dockerfile
+
+Deploy Package:
+  stage: deploy
+  extends: [.python_base]
+  script:
+    - poetry version $CI_COMMIT_TAG
+    - poetry build
+    - poetry config repositories.gitlab "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/packages/pypi"
+    - poetry config http-basic.gitlab gitlab-ci-token "$CI_JOB_TOKEN"
+    - poetry publish --repository gitlab
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/
