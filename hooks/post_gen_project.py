@@ -1,6 +1,29 @@
 #!/usr/bin/env python
 import json
 from pathlib import Path
+import os
+import pathlib
+import shutil
+
+
+ci_platform = "{{ cookiecutter.ci_platform }}"
+
+
+def remove_path(path):
+    cur_dir = pathlib.Path(os.getcwd())
+    p = cur_dir.joinpath(path).resolve()
+    if p.exists():
+        if p.is_dir():
+            shutil.rmtree(p)
+        else:
+            p.unlink()
+
+
+def remove_ci():
+    if ci_platform != "GitLab":
+        remove_path(".gitlab-ci.yml")
+    if ci_platform != "Github":
+        remove_path(".gitlab")
 
 
 def reindent_cookiecutter_json():
@@ -22,3 +45,4 @@ def reindent_cookiecutter_json():
 
 if __name__ == "__main__":
     reindent_cookiecutter_json()
+    remove_ci()
