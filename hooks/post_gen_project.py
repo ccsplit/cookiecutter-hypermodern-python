@@ -7,6 +7,7 @@ import shutil
 
 
 ci_platform = "{{ cookiecutter.ci_platform }}"
+print(ci_platform)
 
 
 def remove_path(path):
