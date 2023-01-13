@@ -7,7 +7,6 @@ import shutil
 
 
 ci_platform = "{{ cookiecutter.ci_platform }}"
-print(ci_platform)
 
 
 def remove_path(path):
@@ -24,7 +23,7 @@ def remove_ci():
     if ci_platform != "GitLab":
         remove_path(".gitlab-ci.yml")
     if ci_platform != "Github":
-        remove_path(".gitlab")
+        remove_path(".github")
 
 
 def reindent_cookiecutter_json():
