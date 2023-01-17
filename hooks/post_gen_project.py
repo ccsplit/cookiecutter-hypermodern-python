@@ -7,6 +7,7 @@ import shutil
 
 
 ci_platform = "{{ cookiecutter.ci_platform }}"
+license = "{{ cookiecutter.license }}"
 
 
 def remove_path(path):
@@ -19,11 +20,13 @@ def remove_path(path):
             p.unlink()
 
 
-def remove_ci():
+def remove_files():
     if ci_platform != "GitLab":
         remove_path(".gitlab-ci.yml")
     if ci_platform != "Github":
         remove_path(".github")
+    if license == "None":
+        remove_path("LICENSE")
 
 
 def reindent_cookiecutter_json():
@@ -45,4 +48,4 @@ def reindent_cookiecutter_json():
 
 if __name__ == "__main__":
     reindent_cookiecutter_json()
-    remove_ci()
+    remove_files()
