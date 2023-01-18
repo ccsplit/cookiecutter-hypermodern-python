@@ -53,6 +53,9 @@ def change_files():
             re.compile("This project is open-source under the \[.*?license\]"),
             "This project",
         )
+        change_text(
+            "README.md", re.compile("## License.*\s+.*\s+.*\s+## Issues", re.M), ""
+        )
 
 
 def reindent_cookiecutter_json():
