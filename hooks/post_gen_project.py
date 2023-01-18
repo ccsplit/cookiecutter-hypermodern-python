@@ -50,7 +50,7 @@ def change_files():
         remove_path("LICENSE")
         change_text(
             "CONTRIBUTING.md",
-            re.compile("This project is open-source under the [.*?license]"),
+            re.compile("This project is open-source under the \[.*?license\]"),
             "This project",
         )
 
