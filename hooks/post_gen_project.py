@@ -43,6 +43,7 @@ def change_files():
     if ci_platform != "Github":
         remove_path(".github")
         remove_path(".pre-commit-config.yml")
+        remove_path("CODE_OF_CONDUCT.md")
         remove_path("CONTRIBUTING.github.md")
         rename_file("CONTRIBUTING.gitlab.md", "CONTRIBUTING.md")
     if license == "None":
